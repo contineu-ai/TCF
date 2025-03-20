@@ -16,12 +16,9 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-# nlohmann_json
-find_package(nlohmann_json REQUIRED)
-
 add_subdirectory(utils)
 add_subdirectory(registration)
 
-add_executable(demo demo.cpp)
-target_link_libraries(demo PRIVATE ${PCL_LIBRARIES} 
-    ${TCF_REGISTRATION_LIB} ${TCF_UTILS_LIB} nlohmann_json::nlohmann_json) 
+add_executable(main main.cpp)
+target_link_libraries(main PRIVATE ${PCL_LIBRARIES} 
+    ${TCF_REGISTRATION_LIB} ${TCF_UTILS_LIB}) 
