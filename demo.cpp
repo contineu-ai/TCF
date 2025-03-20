@@ -3,34 +3,17 @@
 #include "utils/for_io.h"
 #include "utils/for_time.h"
 #include <pcl/io/pcd_io.h>
-#include <nlohmann/json.hpp>  // for reading json file
 
-using json = nlohmann::json;
 int main(int argc, char** argv) {
-    std::cout << "==========================================\n";
-    std::cout << "======== Demo of TCF Registration ========\n";
-    std::cout << "==========================================\n";
-
-    // Open the JSON file
-    std::ifstream ifs("../config/config_eth.json"); // eth 
-    // std::ifstream ifs("../config/config_kitti.json"); // kitti 
-    if (!ifs.is_open()) {
-        std::cout << "Cannot open config.json file.\n";
-        return 1;
-    }
-
-    // Parse the JSON file
-    json config;
-    ifs >> config;
-    std::string path_source_cloud = config["path_source_cloud"];
-    std::string path_target_cloud = config["path_target_cloud"];
-    std::string path_matches = config["path_matches"];
-    std::string path_gt = config["path_gt"];
-
-    // Load ground-truth pose
-    Eigen::Matrix4f gt = Eigen::Matrix4f::Identity(); 
-    loadMatrix44(path_gt, gt);
-    std::cout << "GT pose: \n" << gt << "\n";
+    
+    // Reading command line args
+    std::string path_source_cloud = argv[1];
+    std::string path_target_cloud = argv[2];
+    std::string path_matches = argv[3];
+    std::string output_path = argv[4];
+    // std::string path_source_cloud = config["path_source_cloud"];
+    // std::string path_target_cloud = config["path_target_cloud"];
+    // std::string path_matches = config["path_matches"];
 
     // Load point cloud and resolution
     // this can be replaced by a user-defined value
@@ -54,10 +37,26 @@ int main(int argc, char** argv) {
     Eigen::Matrix4f trans = twoStageConsensusFilter(source_match, target_match, 3*th);
     double time_registration = tic_tcf.toc();
     std::cout << "Runtime: " << time_registration << " ms.\n";
+    std::cout << "TCF pose: \n" << trans << "\n";
+
+    std::ofstream out_file(output_path);
+    if (!out_file.is_open()) {
+        std::cerr << "Error: Could not open file for writing!" << std::endl;
+        return 1;
+    }
+
+    out_file << std::fixed << std::setprecision(15);
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++) {
+            out_file << trans(i, j) << " ";
+        }
+        out_file << std::endl;
+    }
 
     // compute error
-    std::pair<double, double> error = computeTransError(trans, gt);
-    std::cout << "RE: " << error.first << " deg, TE: " << error.second << " m.\n";
+    // std::pair<double, double> error = computeTransError(trans, gt);
+    // std::cout << "RE: " << error.first << " deg, TE: " << error.second << " m.\n";
     
     return 0;
 }
